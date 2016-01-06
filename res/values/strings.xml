@@ -13,5 +13,6 @@
     <string name="submit">Submit</string>
     <string name="username">USERNAME</string>
     <string name="password">PASSWORD</string>
+    <string name="scan">Scan to unLock</string>
     
 </resources>

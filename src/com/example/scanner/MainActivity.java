@@ -9,7 +9,6 @@ import java.net.URL;
 import java.security.Key;
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -26,53 +25,28 @@ import android.widget.EditText;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
-class accountDetails
-{
-	String account;
-	String code;
-	String username;
-	String password;
-}
 public class MainActivity extends Activity {
 
 	static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
 	private static final String PREF_USERNAME = "username:";
 	private static final String PREF_PASSWORD = "password:";
 	private static final String PREF_KEY = "key:";
-
 	private static String stringKey = null;
+	
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		//set the main content layout of the Activity
 		setContentView(R.layout.activity_main);
 	}
 
-	//	void createButtons()
-	//	{
-	//		Resources res = getResources();
-	//		String[] accounts = res.getStringArray(R.array.accounts);
-	//		for (String account: accounts)
-	//		{
-	//			Log.w("accounts", account);
-	//			Button btn= new Button(this);  
-	//			btn.setText(account);  
-	//			btn.setOnClickListener(new View.OnClickListener()   
-	//			{
-	//			    public void onClick(View view) 
-	//			     {
-	//			           scanQR(view);
-	//			     }
-	//			});
-	//		}		
-	//	}
-
-	//product qr code mode
+	/*
+	 * Method that scans the QR Code
+	 */
 	public void scanQR(View v) {
 		try {
 			//start the scanning activity from the com.google.zxing.client.android.SCAN intent
 			Intent intent = new Intent(ACTION_SCAN);
-			intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
 			startActivityForResult(intent, 0);
 		} catch (ActivityNotFoundException anfe) {
 			//on catch, show the download dialog
@@ -100,19 +74,7 @@ public class MainActivity extends Activity {
 		String account = ((AdapterView<SpinnerAdapter>) findViewById(R.id.spinner)).getSelectedItem().toString().toLowerCase();
 		if (user.length()>0 && pass.length()>0)
 		{
-			String encryptedUser = encrypt(user);
-			String encryptedPass = encrypt(pass);
-			if(stringKey != null){
-				getSharedPreferences(account,MODE_PRIVATE)
-				.edit()
-				.putString(PREF_USERNAME, user)
-				.putString(PREF_PASSWORD, encryptedPass)
-				.putString(PREF_KEY, stringKey)
-				.commit();
-				Toast.makeText(getApplicationContext(),"Saved Successfully",Toast.LENGTH_LONG).show();
-				setContentView(R.layout.activity_main);
-				stringKey=null;
-			}
+			saveData(account, user, pass);
 		}
 		else if (user.length() >0 && pass.length() == 0 )
 		{
@@ -127,6 +89,25 @@ public class MainActivity extends Activity {
 			Toast.makeText(getApplicationContext(),"Please Enter Login Details for " + account,Toast.LENGTH_LONG).show();
 		}
 	}
+	
+	private void saveData(String account, String user, String pass)
+	{
+		String encryptedPass = encrypt(pass);
+		if(stringKey != null){
+			getSharedPreferences(account,MODE_PRIVATE)
+			.edit()
+			.putString(PREF_USERNAME, user)
+			.putString(PREF_PASSWORD, encryptedPass)
+			.putString(PREF_KEY, stringKey)
+			.commit();
+			Log.w("Exception", "Username and Pass Saved SaveData() " + user + " " + encryptedPass);
+			Toast.makeText(getApplicationContext(),"Saved Successfully",Toast.LENGTH_LONG).show();
+			setContentView(R.layout.activity_main);
+			stringKey=null;
+		}
+	}
+	
+	
 	/*
 	 * Method to encrypt a String using AES encryption
 	 */
@@ -169,12 +150,13 @@ public class MainActivity extends Activity {
 			}
 		}
 		return encrypted;
+
 	}
-	private  String decrypt(String encryptedText, String key)
+
+	private String decrypt(String encryptedText, String key)
 	{
 		String decrypted = null;
 		try{
-
 			byte[] encodedKey = Base64.decode(key, Base64.DEFAULT);
 			Key secretKey = new SecretKeySpec(encodedKey,0,encodedKey.length, "AES");  
 			Cipher cipher = Cipher.getInstance("AES");
@@ -182,7 +164,7 @@ public class MainActivity extends Activity {
 			byte[] encryptedTextBytes = Base64.decode(encryptedText, Base64.DEFAULT);
 			byte[] decryptedTextBytes = cipher.doFinal(encryptedTextBytes);
 			decrypted = new String(decryptedTextBytes);
-			Log.w("Exception", "Decrypted: " + decrypted);
+			return decrypted;
 		}
 		catch(Exception e)
 		{
@@ -214,7 +196,28 @@ public class MainActivity extends Activity {
 		return downloadDialog.show();
 	}
 
-	//on ActivityResult method
+	private static AlertDialog promptDialog(final Activity act, CharSequence title, CharSequence message, CharSequence buttonYes, CharSequence buttonNo)
+	{
+		AlertDialog.Builder prompt = new AlertDialog.Builder(act);
+		prompt.setTitle(title);
+		prompt.setMessage(message);
+		prompt.setPositiveButton(buttonYes, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialogInterface, int i) {
+				act.setContentView(R.layout.activity_new_account);
+			}
+		});
+		prompt.setNegativeButton(buttonNo, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialogInterface, int i) {
+			}
+		});
+		return prompt.show();
+		
+	}
+
+	
+	/*
+	*Method that handles the result from the qrcode scan
+	*/	
 	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		if (requestCode == 0) {
 			if (resultCode == RESULT_OK) {
@@ -223,20 +226,24 @@ public class MainActivity extends Activity {
 				String[] parts = recievedString.split("::");
 				final String account=parts[0];
 				final String code=parts[1];
-
 				SharedPreferences settings = getSharedPreferences(account, MODE_PRIVATE);
 				final String user  = settings.getString(PREF_USERNAME, null);
 				String pass = settings.getString(PREF_PASSWORD, null);
 				final String key = settings.getString(PREF_KEY, null);
 				final String decryptPass = decrypt(pass, key);
-				Log.w("Exception", "Decrypted" + decryptPass);
-				new Thread(){
-					public void run(){
-						Log.w("Exception", "Thread Starting");
-						sendData(account,code, user, decryptPass);				    
-					}
-				}.start();
-			}
+				if(user==null && pass == null)
+				{
+					promptDialog(MainActivity.this, "Account Not Found", 
+						"You have not added creditentials for " + account + " account. Add them?", 
+						"Yes", "No").show();
+				}
+				else{
+					new Thread(){
+						public void run(){
+							sendData(account,code, user, decryptPass);				    
+						}
+					}.start();
+				}}
 		}
 	}
 
@@ -252,7 +259,6 @@ public class MainActivity extends Activity {
 		URL url = null;   
 		String response = null; 
 		String password = null;
-
 		password = encrypt(pass,code);
 
 		try
