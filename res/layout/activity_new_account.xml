@@ -29,7 +29,7 @@
         android:layout_centerHorizontal="true"
         android:layout_gravity="center"
         android:ems="10"
-        android:hint="PASSWORD"
+        android:hint="@string/password"
         android:inputType="textPassword" />
 
     <Button
@@ -41,8 +41,8 @@
         android:layout_margin="10dp"
         android:gravity="center"
         android:onClick="addData"
-        android:text="Submit"
-        android:textSize="18dp" 
+        android:text="@string/submit"
+        android:textSize="18sp" 
        
         />
 
@@ -62,9 +62,10 @@
         android:layout_below="@+id/spinner"
         android:layout_centerHorizontal="true"
         android:ems="10"
-        android:hint="USERNAME" >
+        android:hint="@string/username" >
 
         <requestFocus />
     </EditText>
+
 
 </RelativeLayout>
