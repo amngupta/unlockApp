@@ -275,6 +275,8 @@ public class MainActivity extends Activity {
 			request.write(data);
 			request.flush();
 			request.close();            
+			
+			
 			String line = "";               
 			InputStreamReader isr = new InputStreamReader(connection.getInputStream());
 			BufferedReader reader = new BufferedReader(isr);
