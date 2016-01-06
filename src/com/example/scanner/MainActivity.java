@@ -31,7 +31,6 @@ public class MainActivity extends Activity {
 	private static final String PREF_USERNAME = "username:";
 	private static final String PREF_PASSWORD = "password:";
 	private static final String PREF_KEY = "key:";
-	private static String stringKey = null;
 	
 	
 	@Override
@@ -58,76 +57,11 @@ public class MainActivity extends Activity {
 	 */
 	public void addAccount(View v)
 	{
-		setContentView(R.layout.activity_new_account);
+        Intent nextScreen = new Intent(getApplicationContext(), AddAccount.class);
+        startActivity(nextScreen);
+
 	}
 
-	/*
-	 * Store the Data in Mobile Memory
-	 */
-	public void addData(View v)
-	{
-		EditText username = (EditText) findViewById(R.id.username);
-		EditText password = (EditText) findViewById(R.id.password);
-		String user = username.getText().toString();
-		String pass = password.getText().toString();
-		@SuppressWarnings("unchecked")
-		String account = ((AdapterView<SpinnerAdapter>) findViewById(R.id.spinner)).getSelectedItem().toString().toLowerCase();
-		if (user.length()>0 && pass.length()>0)
-		{
-			saveData(account, user, pass);
-		}
-		else if (user.length() >0 && pass.length() == 0 )
-		{
-			Toast.makeText(getApplicationContext(),"Please Enter Password for " + account,Toast.LENGTH_LONG).show();
-		}
-		else if (user.length() == 0 && pass.length() > 0 )
-		{
-			Toast.makeText(getApplicationContext(),"Please Enter Username for " + account,Toast.LENGTH_LONG).show();
-		}
-		else
-		{
-			Toast.makeText(getApplicationContext(),"Please Enter Login Details for " + account,Toast.LENGTH_LONG).show();
-		}
-	}
-	
-	private void saveData(String account, String user, String pass)
-	{
-		String encryptedPass = encrypt(pass);
-		if(stringKey != null){
-			getSharedPreferences(account,MODE_PRIVATE)
-			.edit()
-			.putString(PREF_USERNAME, user)
-			.putString(PREF_PASSWORD, encryptedPass)
-			.putString(PREF_KEY, stringKey)
-			.commit();
-			Log.w("Exception", "Username and Pass Saved SaveData() " + user + " " + encryptedPass);
-			Toast.makeText(getApplicationContext(),"Saved Successfully",Toast.LENGTH_LONG).show();
-			setContentView(R.layout.activity_main);
-			stringKey=null;
-		}
-	}
-	
-	
-	/*
-	 * Method to encrypt a String using AES encryption
-	 */
-	private String encrypt(String plainData)
-	{
-		String encrypted = null;
-		try {
-			KeyGenerator keyGen = KeyGenerator.getInstance("AES"); 
-			keyGen.init(128); 
-			SecretKey secretKey = keyGen.generateKey(); 
-			Cipher aesCipher = Cipher.getInstance("AES");
-			aesCipher.init(Cipher.ENCRYPT_MODE,secretKey); 
-			byte[] byteCipherText = aesCipher.doFinal(plainData.getBytes()); 
-			encrypted =  Base64.encodeToString(byteCipherText, Base64.DEFAULT);
-			stringKey = Base64.encodeToString(secretKey.getEncoded(), Base64.DEFAULT);
-			return encrypted;
-		}
-		catch(Exception e) { } 
-		return encrypted;
-	}
 	private String encrypt(String plainData, String key)
 	{
 		String encrypted = null;

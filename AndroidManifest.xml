@@ -27,7 +27,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".NewAccount"
+            android:name=".AddAccount"
             android:label="@string/title_activity_new_account" 
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait"
