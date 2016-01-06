@@ -2,33 +2,26 @@ package com.example.scanner;
 
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.Key;
-import java.security.MessageDigest;
-
 import javax.crypto.*;
-import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SpinnerAdapter;
 import android.widget.Toast;
@@ -139,6 +132,7 @@ public class MainActivity extends Activity {
 	 */
 	private String encrypt(String plainData)
 	{
+		String encrypted = null;
 		try {
 			KeyGenerator keyGen = KeyGenerator.getInstance("AES"); 
 			keyGen.init(128); 
@@ -146,52 +140,55 @@ public class MainActivity extends Activity {
 			Cipher aesCipher = Cipher.getInstance("AES");
 			aesCipher.init(Cipher.ENCRYPT_MODE,secretKey); 
 			byte[] byteCipherText = aesCipher.doFinal(plainData.getBytes()); 
-			String encrypted =  Base64.encodeToString(byteCipherText, Base64.DEFAULT);
+			encrypted =  Base64.encodeToString(byteCipherText, Base64.DEFAULT);
 			stringKey = Base64.encodeToString(secretKey.getEncoded(), Base64.DEFAULT);
 			return encrypted;
 		}
 		catch(Exception e) { } 
-		return null;
+		return encrypted;
 	}
 	private String encrypt(String plainData, String key)
 	{
-		try{
-			final MessageDigest md = MessageDigest.getInstance("MD5");
-			final byte[] digest = md.digest(key.getBytes());
-
-			SecretKey secretKey = new SecretKeySpec(digest, "AES");
-			Cipher aesCipher = Cipher.getInstance("AES");
-			aesCipher.init(Cipher.ENCRYPT_MODE,secretKey); 
-			byte[] byteCipherText = aesCipher.doFinal(plainData.getBytes()); 
-			String encrypted =  Base64.encodeToString(byteCipherText, Base64.DEFAULT);
-			Toast.makeText(this,"Message from Server: \n"+ encrypted, 0).show();             
-
-			return encrypted;	
-		}catch(Exception e)
+		String encrypted = null;
+		if (plainData == null)
 		{
-			Toast.makeText(this,"Exception Here", 0).show();             
-
+			Log.w("Exception", "Strig was empty");
 		}
-		return null;
+		else{
+			try{
+				byte[] encodedKey = Base64.decode(key, Base64.DEFAULT);
+				Key secretKey = new SecretKeySpec(encodedKey,0,encodedKey.length, "AES");  
+				Cipher aesCipher = Cipher.getInstance("AES");
+				aesCipher.init(Cipher.ENCRYPT_MODE, secretKey); 
+				byte[] byteCipherText = aesCipher.doFinal(plainData.getBytes()); 
+				encrypted =  Base64.encodeToString(byteCipherText, Base64.DEFAULT);
+				return encrypted;	
+			}catch(Exception e)
+			{
+				Log.w("Exception", e.toString());
+			}
+		}
+		return encrypted;
 	}
 	private  String decrypt(String encryptedText, String key)
 	{
+		String decrypted = null;
 		try{
-			SecretKey secretKey = new SecretKeySpec(key.getBytes(), "AES");
-			// Instantiate the cipher
+
+			byte[] encodedKey = Base64.decode(key, Base64.DEFAULT);
+			Key secretKey = new SecretKeySpec(encodedKey,0,encodedKey.length, "AES");  
 			Cipher cipher = Cipher.getInstance("AES");
 			cipher.init(Cipher.DECRYPT_MODE, secretKey);
-
 			byte[] encryptedTextBytes = Base64.decode(encryptedText, Base64.DEFAULT);
 			byte[] decryptedTextBytes = cipher.doFinal(encryptedTextBytes);
-			String decrypted = new String(decryptedTextBytes);
-			Toast.makeText(this,"Message from Server: \n"+ decrypted, 0).show();             
-
-			return decrypted;
+			decrypted = new String(decryptedTextBytes);
+			Log.w("Exception", "Decrypted: " + decrypted);
 		}
 		catch(Exception e)
-		{}
-		return null;
+		{
+			Log.w("Exception", e.toString());
+		}
+		return decrypted;
 	}
 
 	//alert dialog for downloadDialog
@@ -232,9 +229,10 @@ public class MainActivity extends Activity {
 				String pass = settings.getString(PREF_PASSWORD, null);
 				final String key = settings.getString(PREF_KEY, null);
 				final String decryptPass = decrypt(pass, key);
-				Toast.makeText(this,"Message from Server: \n"+ decryptPass, 0).show();             
+				Log.w("Exception", "Decrypted" + decryptPass);
 				new Thread(){
 					public void run(){
+						Log.w("Exception", "Thread Starting");
 						sendData(account,code, user, decryptPass);				    
 					}
 				}.start();
@@ -245,7 +243,6 @@ public class MainActivity extends Activity {
 	/*
 	 * Method to Post to Server
 	 */
-	@SuppressLint("ShowToast")
 	void sendData(String account, String code, String user, String pass)
 	{
 
@@ -256,12 +253,13 @@ public class MainActivity extends Activity {
 		String response = null; 
 		String password = null;
 
+		password = encrypt(pass,code);
+
 		try
 		{
-			password = encrypt(pass,code);
 
 			String data = "account!!!" + account + ",code!!!" + code + ",username!!!" + user + ",password!!!" + password;
-
+			Log.w("Exception", data);
 			url = new URL("https://phone-unlock.herokuapp.com/login");
 			connection = (HttpURLConnection) url.openConnection();
 			connection.setDoOutput(true);
@@ -282,7 +280,6 @@ public class MainActivity extends Activity {
 			// Response from server after login process will be stored in response variable.                
 			response = sb.toString();
 			// You can perform UI operations here
-			Toast.makeText(this,"Message from Server: \n"+ response, 0).show();             
 			isr.close();
 			reader.close();
 
