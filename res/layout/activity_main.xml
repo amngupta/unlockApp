@@ -29,5 +29,16 @@
         android:text="@string/addAccount"
         android:textSize="18sp" />
 
+     <Button
+        android:id="@+id/scan"
+        android:layout_width="250dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:layout_margin="10dp"
+        android:gravity="center"
+        android:onClick="scanQR"
+        android:text="@string/scan"
+        android:textSize="18sp" />
+    
 
 </LinearLayout>

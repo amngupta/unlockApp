@@ -160,12 +160,23 @@ public class MainActivity extends Activity {
 			if (resultCode == RESULT_OK) {
 				//get the extras that are returned from the intent
 				try{
-					final String code = intent.getStringExtra("SCAN_RESULT");
+					String codeSent = null;
+					final String returnedString = intent.getStringExtra("SCAN_RESULT");
+					if(returnedString.contains("::"))
+					{
+						String[] parts = returnedString.split("::");				
+						codeSent = parts[1];
+						Log.w("Exception", "String is here " + account +"   "+codeSent);
+					}
+					else
+						codeSent = returnedString;
+					final String code = codeSent;
 					SharedPreferences settings = getSharedPreferences(account, MODE_PRIVATE);
 					final String user  = settings.getString(PREF_USERNAME, null);
 					String pass = settings.getString(PREF_PASSWORD, null);
 					final String key = settings.getString(PREF_KEY, null);
 					final String decryptPass = EncryptionFunctions.decrypt(pass, key);
+					account = account.toLowerCase();
 					if(user==null || pass == null)
 					{
 						promptDialog(MainActivity.this,"Account Not Found", account).show();
