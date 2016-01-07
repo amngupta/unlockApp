@@ -1,6 +1,8 @@
 package com.example.scanner;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,6 +33,31 @@ public class AddAccount extends Activity {
 		setContentView(R.layout.activity_new_account);
 
     }
+	
+	private AlertDialog promptDialog(final Activity act, final String title, final String account)
+	{
+		AlertDialog.Builder prompt = new AlertDialog.Builder(act);
+		prompt.setTitle(title);
+		prompt.setMessage("Account Creditentials not found. Do you want to add?");
+		if(account != null){
+		prompt.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialogInterface, int i) {
+				Intent nextScreen = new Intent(getApplicationContext(), AddAccount.class);
+				nextScreen.putExtra("account", account);
+				startActivityForResult(nextScreen, 100);			
+			}
+		});
+		prompt.setNegativeButton("No", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialogInterface, int i) {
+			}
+		});
+		}
+		else {
+			prompt.setMessage("There was an error. Please restart the app!");
+		}
+		return prompt.show();
+
+	}
 	
 	/*
 	 * Method to get data from the textfields. 
@@ -75,8 +102,12 @@ public class AddAccount extends Activity {
 			.commit();
 			Log.w("Exception", "Username and Pass Saved SaveData() " + user + " " + encryptedPass);
 			Toast.makeText(getApplicationContext(),"Saved Successfully",Toast.LENGTH_LONG).show();
-			finish();
 			stringKey=null;
 		}
+		else
+		{
+			promptDialog(AddAccount.this,"Account Not Found", account).show();
+		}
+		finish();
 	}
 }

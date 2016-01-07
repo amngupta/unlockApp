@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
@@ -28,16 +29,5 @@
         android:text="@string/addAccount"
         android:textSize="18sp" />
 
-    <Button
-        android:id="@+id/scanner"
-        android:layout_width="250dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:layout_margin="10dp"
-        android:gravity="center"
-        android:onClick="scanQR"
-        android:text="@string/scan"
-        android:textSize="18sp" >
-    </Button>
 
 </LinearLayout>

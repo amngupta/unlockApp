@@ -6,24 +6,23 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.Key;
-import javax.crypto.*;
-import javax.crypto.spec.SecretKeySpec;
+import java.util.ArrayList;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.EditText;
-import android.widget.SpinnerAdapter;
-import android.widget.Toast;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.LinearLayout;
+
 
 public class MainActivity extends Activity {
 
@@ -31,16 +30,65 @@ public class MainActivity extends Activity {
 	public static final String PREF_USERNAME = "username:";
 	public static final String PREF_PASSWORD = "password:";
 	public static final String PREF_KEY = "key:";
+	public static String account = null;
+	ArrayList<Integer> hashcodes = new ArrayList<Integer>();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 	}
+
+	@Override
+	protected void onStart()
+	{   
+		super.onStart();
+	}
+
+
+	@Override
+	protected void onResume()
+	{   
+		super.onResume();		
+		createButtons();
+
+	}
+
+	void createButtons()
+	{
+		String[] accounts =  (getResources().getStringArray(R.array.accounts));
+		LinearLayout yourlayout= (LinearLayout) findViewById(R.id.container);
+		for (final String accountBtn: accounts)
+		{
+			SharedPreferences settings = getSharedPreferences(accountBtn, MODE_PRIVATE);
+			int accountCode = accountBtn.hashCode();
+			String user  = settings.getString(PREF_USERNAME, null);	
+			if(user != null && hashcodes.contains(accountCode)==false)
+			{
+				hashcodes.add(accountCode);
+				Button btn = new Button (this);
+				btn.setId(accounts.hashCode());
+				btn.setWidth(250);
+				btn.setHeight(80);
+				btn.setText(accountBtn);
+
+				//btn.setBackgroundColor(Color.BLUE);
+				btn.setOnClickListener(new OnClickListener(){
+					@Override
+					public void onClick(View arg0) {
+						account = accountBtn;
+						scanQR();
+					}	
+				});
+				yourlayout.addView(btn);
+			}
+		}
+	}
+
 	/*
 	 * Method that scans the QR Code
 	 */
-	public void scanQR(View v) {
+	public void scanQR() {
 		try {
 			//start the scanning activity from the com.google.zxing.client.android.SCAN intent
 			Intent intent = new Intent(ACTION_SCAN);
@@ -80,22 +128,27 @@ public class MainActivity extends Activity {
 		});
 		return downloadDialog.show();
 	}
-	private AlertDialog promptDialog(final Activity act, final String account)
+	private AlertDialog promptDialog(final Activity act, final String title, final String account)
 	{
 		AlertDialog.Builder prompt = new AlertDialog.Builder(act);
-		prompt.setTitle("Account not Found");
+		prompt.setTitle(title);
 		prompt.setMessage("Account Creditentials not found. Do you want to add?");
-		prompt.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialogInterface, int i) {
-				Intent nextScreen = new Intent(getApplicationContext(), AddAccount.class);
-				nextScreen.putExtra("account", account);
-				startActivityForResult(nextScreen, 100);			
-			}
-		});
-		prompt.setNegativeButton("No", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialogInterface, int i) {
-			}
-		});
+		if(account != null){
+			prompt.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialogInterface, int i) {
+					Intent nextScreen = new Intent(getApplicationContext(), AddAccount.class);
+					nextScreen.putExtra("account", account);
+					startActivityForResult(nextScreen, 100);			
+				}
+			});
+			prompt.setNegativeButton("No", new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialogInterface, int i) {
+				}
+			});
+		}
+		else {
+			prompt.setMessage("There was an error. Please restart the app!");
+		}
 		return prompt.show();
 
 	}
@@ -106,26 +159,29 @@ public class MainActivity extends Activity {
 		if (requestCode == 0) {
 			if (resultCode == RESULT_OK) {
 				//get the extras that are returned from the intent
-				final String recievedString = intent.getStringExtra("SCAN_RESULT");
-				String[] parts = recievedString.split("::");
-				final String account=parts[0].substring(0, 1).toUpperCase() + parts[0].substring(1);
-				final String code=parts[1];
-				SharedPreferences settings = getSharedPreferences(account, MODE_PRIVATE);
-				final String user  = settings.getString(PREF_USERNAME, null);
-				String pass = settings.getString(PREF_PASSWORD, null);
-				final String key = settings.getString(PREF_KEY, null);
-				final String decryptPass = EncryptionFunctions.decrypt(pass, key);
-				if(user==null || pass == null)
+				try{
+					final String code = intent.getStringExtra("SCAN_RESULT");
+					SharedPreferences settings = getSharedPreferences(account, MODE_PRIVATE);
+					final String user  = settings.getString(PREF_USERNAME, null);
+					String pass = settings.getString(PREF_PASSWORD, null);
+					final String key = settings.getString(PREF_KEY, null);
+					final String decryptPass = EncryptionFunctions.decrypt(pass, key);
+					if(user==null || pass == null)
+					{
+						promptDialog(MainActivity.this,"Account Not Found", account).show();
+					}
+					else{
+						new Thread(){
+							public void run(){
+								sendData(account,code, user, decryptPass);				    
+							}
+						}.start();
+					}}catch(Exception e)
 				{
-					promptDialog(MainActivity.this, account).show();
+						promptDialog(MainActivity.this, "Entered A Problem", null).show();
 				}
-				else{
-					new Thread(){
-						public void run(){
-							sendData(account,code, user, decryptPass);				    
-						}
-					}.start();
-				}}
+			}
+
 		}
 	}
 	/*
