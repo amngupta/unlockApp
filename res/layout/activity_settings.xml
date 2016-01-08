@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_settings"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    android:gravity="center_horizontal|center"
+    android:orientation="vertical"
+    tools:context="com.example.scanner.SettingsActivity" >
+
+    <include
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        layout="@layout/list_layout" />
+
+    <Button
+        android:id="@+id/deleteAccount"
+        android:layout_width="250dp"
+        android:layout_height="80dp"
+        android:layout_margin="10dp"
+        android:gravity="center"
+        android:onClick="deleteAccount"
+        android:text="@string/deleteAccounts"
+        android:textSize="18sp"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/shareFacebook"
+        android:layout_width="250dp"
+        android:layout_height="80dp"
+        android:layout_margin="10dp"
+        android:gravity="center"
+        android:onClick="shareFB"
+        android:text="@string/shareFB"
+        android:textSize="18sp"
+        android:visibility="visible" />
+
+</LinearLayout>

@@ -23,6 +23,7 @@
         android:layout_gravity="center_vertical|center_horizontal|center"
         android:entries="@array/accounts"
         android:gravity="center_vertical|center_horizontal|center"
+        android:textAlignment="center"
         android:textSize="30sp" />
 
     <EditText

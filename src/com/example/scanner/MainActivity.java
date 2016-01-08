@@ -18,10 +18,14 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 
 
 public class MainActivity extends Activity {
@@ -32,13 +36,31 @@ public class MainActivity extends Activity {
 	public static final String PREF_KEY = "key:";
 	public static String account = null;
 	ArrayList<Integer> hashcodes = new ArrayList<Integer>();
+	public static ArrayList<String> addedAccounts = new ArrayList<String>();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 	}
-
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			Intent nextScreen = new Intent(getApplicationContext(), SettingsActivity.class);
+			startActivity(nextScreen);
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
 	@Override
 	protected void onStart()
 	{   
@@ -49,9 +71,9 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume()
 	{   
-		super.onResume();		
+		super.onResume();
+		addedAccounts.clear();
 		createButtons();
-
 	}
 
 	void createButtons()
@@ -63,16 +85,25 @@ public class MainActivity extends Activity {
 			SharedPreferences settings = getSharedPreferences(accountBtn, MODE_PRIVATE);
 			int accountCode = accountBtn.hashCode();
 			String user  = settings.getString(PREF_USERNAME, null);	
-			if(user != null && hashcodes.contains(accountCode)==false)
+			if(user != null && !hashcodes.contains(accountCode))
 			{
+				LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+				params.topMargin = 10;
+				params.leftMargin = 10;
+				params.bottomMargin = 10;
+				params.rightMargin = 10;
+				params.width = 250;
+				params.height = 80;
+				params.gravity = Gravity.CENTER;
 				hashcodes.add(accountCode);
 				Button btn = new Button (this);
-				btn.setId(accounts.hashCode());
+				btn.setLayoutParams(params);
 				btn.setWidth(250);
 				btn.setHeight(80);
+				btn.setGravity(Gravity.CENTER);
+				btn.setId(accounts.hashCode());
 				btn.setText(accountBtn);
-
-				//btn.setBackgroundColor(Color.BLUE);
+				addedAccounts.add(accountBtn);
 				btn.setOnClickListener(new OnClickListener(){
 					@Override
 					public void onClick(View arg0) {
@@ -88,6 +119,16 @@ public class MainActivity extends Activity {
 	/*
 	 * Method that scans the QR Code
 	 */
+	public void scanQR(View v) {
+		try {
+			//start the scanning activity from the com.google.zxing.client.android.SCAN intent
+			Intent intent = new Intent(ACTION_SCAN);
+			startActivityForResult(intent, 0);
+		} catch (ActivityNotFoundException anfe) {
+			//on catch, show the download dialog
+			showDialog(MainActivity.this, "No Scanner Found", "Download a scanner code activity?", "Yes", "No").show();
+		}
+	}
 	public void scanQR() {
 		try {
 			//start the scanning activity from the com.google.zxing.client.android.SCAN intent
@@ -98,6 +139,7 @@ public class MainActivity extends Activity {
 			showDialog(MainActivity.this, "No Scanner Found", "Download a scanner code activity?", "Yes", "No").show();
 		}
 	}
+	
 	/*
 	 * Open the NewAccount acitivity
 	 */
@@ -164,7 +206,8 @@ public class MainActivity extends Activity {
 					final String returnedString = intent.getStringExtra("SCAN_RESULT");
 					if(returnedString.contains("::"))
 					{
-						String[] parts = returnedString.split("::");				
+						String[] parts = returnedString.split("::");
+						account = parts[0];
 						codeSent = parts[1];
 						Log.w("Exception", "String is here " + account +"   "+codeSent);
 					}
